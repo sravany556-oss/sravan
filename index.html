@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monkey Banana Game</title>
+
+    <style>
+        body {
+            margin: 0;
+            text-align: center;
+            font-family: Arial;
+            background: skyblue;
+        }
+
+        h1 {
+            margin: 15px;
+        }
+
+        #game {
+            width: 500px;
+            height: 500px;
+            margin: auto;
+            position: relative;
+            overflow: hidden;
+            border: 4px solid black;
+            background: linear-gradient(
+                skyblue 0%,
+                lightblue 70%,
+                green 70%
+            );
+        }
+
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 22px;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        #monkey {
+            position: absolute;
+            bottom: 15px;
+            left: 220px;
+            font-size: 60px;
+            z-index: 5;
+        }
+
+        .item {
+            position: absolute;
+            font-size: 35px;
+            z-index: 4;
+        }
+
+        #gameOver {
+            display: none;
+            position: absolute;
+            top: 180px;
+            width: 100%;
+            font-size: 40px;
+            font-weight: bold;
+            color: red;
+            z-index: 20;
+        }
+
+        button {
+            margin: 10px;
+            padding: 12px 25px;
+            font-size: 22px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🐒 Monkey & Banana 🍌</h1>
+<p>Catch 🍌 and avoid 💣</p>
+
+<div id="game">
+
+    <div id="score">Score: 0</div>
+
+    <div id="monkey">🐒</div>
+
+    <div id="gameOver">
+        💥 GAME OVER 💥
+        <br>
+        <button onclick="restart()">Restart</button>
+    </div>
+
+</div>
+
+<button onclick="moveLeft()">⬅️</button>
+<button onclick="moveRight()">➡️</button>
+
+<script>
+
+const game = document.getElementById("game");
+const monkey = document.getElementById("monkey");
+const scoreText = document.getElementById("score");
+const gameOver = document.getElementById("gameOver");
+
+let monkeyX = 220;
+let score = 0;
+let gameRunning = true;
+
+let items = [];
+
+
+// Keyboard movement
+document.addEventListener("keydown", function(event) {
+
+    if (!gameRunning) return;
+
+    if (event.key === "ArrowLeft") {
+        moveLeft();
+    }
+
+    if (event.key === "ArrowRight") {
+        moveRight();
+    }
+
+});
+
+
+// Move left
+function moveLeft() {
+
+    if (monkeyX > 0) {
+        monkeyX -= 25;
+    }
+
+    monkey.style.left = monkeyX + "px";
+}
+
+
+// Move right
+function moveRight() {
+
+    if (monkeyX < 440) {
+        monkeyX += 25;
+    }
+
+    monkey.style.left = monkeyX + "px";
+}
+
+
+// Create banana or bomb
+function createItem() {
+
+    if (!gameRunning) return;
+
+    const item = document.createElement("div");
+
+    item.className = "item";
+
+    let isBomb = Math.random() < 0.25;
+
+    if (isBomb) {
+        item.innerHTML = "💣";
+    } else {
+        item.innerHTML = "🍌";
+    }
+
+    let x;
+
+    // Bombs fall mostly in the middle
+    if (isBomb) {
+        x = 200 + Math.random() * 100;
+    } else {
+        x = Math.random() * 450;
+    }
+
+    item.style.left = x + "px";
+    item.style.top = "-40px";
+
+    game.appendChild(item);
+
+    items.push({
+        element: item,
+        x: x,
+        y: -40,
+        bomb: isBomb
+    });
+}
+
+
+// Game update
+function update() {
+
+    if (!gameRunning) return;
+
+    for (let i = items.length - 1; i >= 0; i--) {
+
+        let item = items[i];
+
+        item.y += 4;
+
+        item.element.style.top = item.y + "px";
+
+
+        // Collision with monkey
+        if (
+            item.y > 400 &&
+            item.y < 470 &&
+            item.x > monkeyX - 30 &&
+            item.x < monkeyX + 60
+        ) {
+
+            if (item.bomb) {
+
+                gameOverScreen();
+
+                return;
+
+            } else {
+
+                score++;
+
+                scoreText.innerHTML = "Score: " + score;
+
+                item.element.remove();
+
+                items.splice(i, 1);
+
+                continue;
+            }
+        }
+
+
+        // Remove after leaving screen
+        if (item.y > 520) {
+
+            item.element.remove();
+
+            items.splice(i, 1);
+        }
+    }
+
+    requestAnimationFrame(update);
+}
+
+
+// Game over
+function gameOverScreen() {
+
+    gameRunning = false;
+
+    gameOver.style.display = "block";
+}
+
+
+// Restart
+function restart() {
+
+    items.forEach(function(item) {
+        item.element.remove();
+    });
+
+    items = [];
+
+    monkeyX = 220;
+    score = 0;
+    gameRunning = true;
+
+    monkey.style.left = "220px";
+
+    scoreText.innerHTML = "Score: 0";
+
+    gameOver.style.display = "none";
+
+    update();
+}
+
+
+// Create new item every 1 second
+setInterval(function() {
+
+    createItem();
+
+}, 1000);
+
+
+// Start game
+update();
+
+</script>
+
+</body>
+</html>
